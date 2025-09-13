@@ -509,135 +509,234 @@ def main():
                         porcentaje_creadoras = (empresas_creadoras / total_empresas) * 100
                         st.metric("Empresas que crean valor", f"{empresas_creadoras}/{total_empresas} ({porcentaje_creadoras:.1f}%)")
 
-        # =====================================================
+        # =============================================================
         # NUEVA SECCIÓN: ESTRUCTURA DE CAPITAL Y SOSTENIBILIDAD DE DEUDA
-        # =====================================================
+        # =============================================================
         st.header("🏦 Estructura de Capital y Sostenibilidad de Deuda")
-        
-        # Subsección 1: Evolución de Activos, Pasivos y Patrimonio por Sector
-        st.subheader("Evolución de Activos, Pasivos y Patrimonio Neto (por Sector)")
-        
-        for sec in sectors_ordered:
-            sec_df = df[df["Sector"] == sec]
-            if sec_df.empty:
-                continue
-                
-            with st.expander(f"Sector: {sec} - Estructura de Capital", expanded=False):
-                for i, chunk in enumerate(chunk_df(sec_df), 1):
-                    st.caption(f"Bloque {i}")
+
+        # Crear pestañas para la nueva sección
+        tab_estructura, tab_sostenibilidad = st.tabs([
+            "Evolución de Activos, Pasivos y Patrimonio Neto (por Sector)",
+            "Ratios de Sostenibilidad de Deuda (por Sector)"
+        ])
+
+        with tab_estructura:
+            st.subheader("Evolución de Activos, Pasivos y Patrimonio Neto (por Sector)")
+            
+            for sec in sectors_ordered:
+                sec_df = df[df["Sector"] == sec]
+                if sec_df.empty:
+                    continue
                     
-                    # Crear gráficos para cada empresa en el chunk
-                    for _, empresa in chunk.iterrows():
-                        st.markdown(f"**{empresa['Ticker']} - {empresa['Nombre']}**")
+                with st.expander(f"Sector: {sec} - Estructura de Capital", expanded=False):
+                    for i, chunk in enumerate(chunk_df(sec_df), 1):
+                        st.caption(f"Bloque {i}")
                         
-                        # Obtener datos para los últimos 4 años
-                        total_assets = empresa["Total Assets"]
-                        total_liabilities = empresa["Total Liabilities"]
-                        total_equity = empresa["Total Equity"]
-                        
-                        if total_assets.empty or total_liabilities.empty or total_equity.empty:
-                            st.warning("Datos insuficientes para mostrar la estructura de capital")
-                            continue
-                        
-                        # Crear gráfico de barras
-                        fig, ax = plt.subplots(figsize=(10, 6))
-                        
-                        # Preparar datos para el gráfico
-                        years = [col.strftime('%Y') for col in total_assets.index]
-                        x_pos = np.arange(len(years))
-                        width = 0.25
-                        
-                        # Graficar barras
-                        bars1 = ax.bar(x_pos - width, total_assets.values / 1e6, width, label='Activos Totales', color='#0074D9')
-                        bars2 = ax.bar(x_pos, total_liabilities.values / 1e6, width, label='Pasivos Totales', color='#FF4136')
-                        bars3 = ax.bar(x_pos + width, total_equity.values / 1e6, width, label='Patrimonio Neto', color='#2ECC40')
-                        
-                        # Configurar el gráfico
-                        ax.set_xlabel('Año')
-                        ax.set_ylabel('Millones USD')
-                        ax.set_title(f'Estructura de Capital - {empresa["Ticker"]}')
-                        ax.set_xticks(x_pos)
-                        ax.set_xticklabels(years)
-                        ax.legend()
-                        
-                        # Añadir valores en las barras
-                        for bars in [bars1, bars2, bars3]:
-                            for bar in bars:
-                                height = bar.get_height()
-                                ax.annotate(f'{height:,.0f}',
-                                            xy=(bar.get_x() + bar.get_width() / 2, height),
-                                            xytext=(0, 3),
-                                            textcoords="offset points",
-                                            ha='center', va='bottom', fontsize=8)
-                        
-                        st.pyplot(fig)
-                        plt.close()
-        
-        # Subsección 2: Ratios de Sostenibilidad de Deuda
-        st.subheader("Ratios de Sostenibilidad de Deuda (por Sector)")
-        
-        # Definir umbrales para los ratios
-        umbrales = {
-            'Debt to Equity': 1.0,
-            'Interest Coverage': 3.0,
-            'Debt to EBITDA': 3.0,
-            'Cash Flow to Debt': 0.2,
-            'FCF to Debt': 0.1
-        }
-        
-        for sec in sectors_ordered:
-            sec_df = df[df["Sector"] == sec]
-            if sec_df.empty:
-                continue
+                        # Crear gráficos para cada empresa en el chunk
+                        for _, empresa in chunk.iterrows():
+                            st.markdown(f"**{empresa['Ticker']} - {empresa['Nombre']}**")
+                            
+                            # Obtener datos para los últimos 4 años
+                            total_assets = empresa["Total Assets"]
+                            total_liabilities = empresa["Total Liabilities"]
+                            total_equity = empresa["Total Equity"]
+                            
+                            if total_assets.empty or total_liabilities.empty or total_equity.empty:
+                                st.warning("Datos insuficientes para mostrar la estructura de capital")
+                                continue
+                            
+                            # Crear gráfico de barras
+                            fig, ax = plt.subplots(figsize=(10, 6))
+                            
+                            # Preparar datos para el gráfico
+                            years = [col.strftime('%Y') for col in total_assets.index]
+                            x_pos = np.arange(len(years))
+                            width = 0.25
+                            
+                            # Graficar barras
+                            bars1 = ax.bar(x_pos - width, total_assets.values / 1e6, width, label='Activos Totales', color='#0074D9')
+                            bars2 = ax.bar(x_pos, total_liabilities.values / 1e6, width, label='Pasivos Totales', color='#FF4136')
+                            bars3 = ax.bar(x_pos + width, total_equity.values / 1e6, width, label='Patrimonio Neto', color='#2ECC40')
+                            
+                            # Configurar el gráfico
+                            ax.set_xlabel('Año')
+                            ax.set_ylabel('Millones USD')
+                            ax.set_title(f'Estructura de Capital - {empresa["Ticker"]}')
+                            ax.set_xticks(x_pos)
+                            ax.set_xticklabels(years)
+                            ax.legend()
+                            
+                            # Añadir valores en las barras
+                            for bars in [bars1, bars2, bars3]:
+                                for bar in bars:
+                                    height = bar.get_height()
+                                    ax.annotate(f'{height:,.0f}',
+                                                xy=(bar.get_x() + bar.get_width() / 2, height),
+                                                xytext=(0, 3),
+                                                textcoords="offset points",
+                                                ha='center', va='bottom', fontsize=8)
+                            
+                            st.pyplot(fig)
+                            plt.close()
+
+        with tab_sostenibilidad:
+            st.subheader("Ratios de Sostenibilidad de Deuda (por Sector)")
+            
+            # Definir umbrales para los ratios
+            umbrales = {
+                'Debt to Equity': 1.0,
+                'Interest Coverage': 3.0,
+                'Debt to EBITDA': 3.0,
+                'Cash Flow to Debt': 0.2,
+                'FCF to Debt': 0.1
+            }
+            
+            # Explicación detallada de los ratios y umbrales
+            with st.expander("ℹ️ Explicación Detallada de los Ratios y Umbrales", expanded=False):
+                st.markdown("""
+                ### 📊 Ratios de Sostenibilidad de Deuda
                 
-            with st.expander(f"Sector: {sec} - Sostenibilidad de Deuda", expanded=False):
-                # Mostrar tabla de ratios
-                ratios_df = sec_df[["Ticker", "Debt to Equity", "Interest Coverage", 
-                                  "Debt to EBITDA", "Cash Flow to Debt", "FCF to Debt"]].copy()
+                **¿Qué es un umbral?** Un **umbral** es un valor de referencia que se utiliza para evaluar si un ratio financiero 
+                indica una situación saludable o problemática. Es como una línea divisoria entre lo aceptable y lo riesgoso.
                 
-                # Calcular evaluación de sostenibilidad
-                evaluacion = []
-                for _, row in ratios_df.iterrows():
-                    sostenible = all([
-                        row.get("Debt to Equity", float('inf')) < umbrales['Debt to Equity'],
-                        row.get("Interest Coverage", 0) > umbrales['Interest Coverage'],
-                        row.get("Debt to EBITDA", float('inf')) < umbrales['Debt to EBITDA'],
-                        row.get("Cash Flow to Debt", 0) > umbrales['Cash Flow to Debt'],
-                        row.get("FCF to Debt", 0) > umbrales['FCF to Debt']
-                    ])
-                    evaluacion.append("✅ Sostenible" if sostenible else "❌ No Sostenible")
+                ---
                 
-                ratios_df["Evaluación"] = evaluacion
-                st.dataframe(ratios_df.set_index("Ticker"), use_container_width=True)
+                **1. Debt to Equity (Deuda/Patrimonio)**
+                - **Fórmula**: Deuda Total / Patrimonio Neto
+                - **Umbral**: < 1.0
+                - **Explicación**: Indica cuánta deuda tiene la empresa en relación con su capital propio. 
+                  Un valor menor a 1 significa que la empresa tiene más capital que deuda, lo que es favorable.
+                - **Interpretación**: 
+                  - ✅ < 1.0: Estructura de capital conservadora
+                  - ⚠️ 1.0-2.0: Apalancamiento moderado
+                  - ❌ > 2.0: Alto apalancamiento, mayor riesgo
                 
-                # Gráfico de ratios comparativos
-                fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-                axes = axes.flatten()
+                **2. Interest Coverage (Cobertura de Intereses)**
+                - **Fórmula**: EBITDA / Gastos por Intereses
+                - **Umbral**: > 3.0
+                - **Explicación**: Mide la capacidad de la empresa para pagar sus intereses con sus ganancias operativas. 
+                  Un valor mayor a 3 indica que genera suficientes ganancias para cubrir cómodamente sus obligaciones de intereses.
+                - **Interpretación**:
+                  - ✅ > 3.0: Cómoda capacidad de pago de intereses
+                  - ⚠️ 1.5-3.0: Capacidad adecuada pero limitada
+                  - ❌ < 1.5: Dificultad para pagar intereses
                 
-                ratios = ["Debt to Equity", "Interest Coverage", "Debt to EBITDA", 
-                         "Cash Flow to Debt", "FCF to Debt"]
+                **3. Debt to EBITDA (Deuda/EBITDA)**
+                - **Fórmula**: Deuda Total / EBITDA
+                - **Umbral**: < 3.0
+                - **Explicación**: Indica cuántos años le tomaría a la empresa pagar toda su deuda usando su EBITDA actual. 
+                  Menos de 3 años se considera manejable.
+                - **Interpretación**:
+                  - ✅ < 3.0: Deuda manejable en relación a ganancias
+                  - ⚠️ 3.0-5.0: Nivel de deuda moderadamente alto
+                  - ❌ > 5.0: Deuda excesiva en relación a ganancias
                 
-                for i, ratio in enumerate(ratios):
-                    if i < len(axes):
-                        ax = axes[i]
-                        values = sec_df[ratio].values
-                        tickers = sec_df["Ticker"].values
+                **4. Cash Flow to Debt (Flujo de Caja/Deuda)**
+                - **Fórmula**: Flujo de Caja Operativo / Deuda Total
+                - **Umbral**: > 0.2 (20%)
+                - **Explicación**: Mide qué porcentaje de la deuda podría pagarse con el flujo de caja operativo en un año. 
+                  Más del 20% es saludable.
+                - **Interpretación**:
+                  - ✅ > 0.2: Alta capacidad de generar cash flow para pagar deuda
+                  - ⚠️ 0.1-0.2: Capacidad moderada
+                  - ❌ < 0.1: Baja capacidad para servir la deuda con cash flow operativo
+                
+                **5. FCF to Debt (Free Cash Flow/Deuda)**
+                - **Fórmula**: Free Cash Flow / Deuda Total
+                - **Umbral**: > 0.1 (10%)
+                - **Explicación**: Similar al anterior pero usando el Free Cash Flow (flujo de caja libre), 
+                  que es el dinero disponible después de inversiones en capital.
+                - **Interpretación**:
+                  - ✅ > 0.1: Buena generación de cash flow libre para pagar deuda
+                  - ⚠️ 0.05-0.1: Capacidad moderada
+                  - ❌ < 0.05: Baja generación de cash flow libre para servir la deuda
+                
+                ---
+                
+                **Nota**: Estos umbrales pueden variar según la industria. Algunos sectores como utilities o bienes raíces 
+                suelen operar con niveles de deuda más altos de manera normal.
+                """)
+            
+            for sec in sectors_ordered:
+                sec_df = df[df["Sector"] == sec]
+                if sec_df.empty:
+                    continue
+                    
+                with st.expander(f"Sector: {sec} - Sostenibilidad de Deuda", expanded=False):
+                    # Mostrar tabla de ratios
+                    ratios_df = sec_df[["Ticker", "Debt to Equity", "Interest Coverage", 
+                                      "Debt to EBITDA", "Cash Flow to Debt", "FCF to Debt"]].copy()
+                    
+                    # Calcular evaluación de sostenibilidad
+                    evaluacion = []
+                    for _, row in ratios_df.iterrows():
+                        sostenible = all([
+                            row.get("Debt to Equity", float('inf')) < umbrales['Debt to Equity'],
+                            row.get("Interest Coverage", 0) > umbrales['Interest Coverage'],
+                            row.get("Debt to EBITDA", float('inf')) < umbrales['Debt to EBITDA'],
+                            row.get("Cash Flow to Debt", 0) > umbrales['Cash Flow to Debt'],
+                            row.get("FCF to Debt", 0) > umbrales['FCF to Debt']
+                        ])
+                        evaluacion.append("✅ Sostenible" if sostenible else "❌ No Sostenible")
+                    
+                    ratios_df["Evaluación"] = evaluacion
+                    st.dataframe(ratios_df.set_index("Ticker"), use_container_width=True)
+                    
+                    # Gráfico de ratios comparativos
+                    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+                    axes = axes.flatten()
+                    
+                    ratios = ["Debt to Equity", "Interest Coverage", "Debt to EBITDA", 
+                             "Cash Flow to Debt", "FCF to Debt"]
+                    
+                    for i, ratio in enumerate(ratios):
+                        if i < len(axes):
+                            ax = axes[i]
+                            values = sec_df[ratio].values
+                            tickers = sec_df["Ticker"].values
+                            
+                            bars = ax.bar(tickers, values)
+                            ax.set_title(ratio)
+                            ax.tick_params(axis='x', rotation=45)
+                            
+                            # Añadir línea de umbral
+                            if ratio in umbrales:
+                                ax.axhline(y=umbrales[ratio], color='r', linestyle='--', alpha=0.7)
+                                ax.text(0.02, 0.98, f'Umbral: {umbrales[ratio]}', 
+                                       transform=ax.transAxes, verticalalignment='top',
+                                       bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                    
+                    # Ocultar el último subplot si no se usa
+                    if len(ratios) < len(axes):
+                        axes[-1].set_visible(False)
+                    
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    plt.close()
+                    
+                    # Resumen del sector
+                    st.subheader(f"Resumen de Sostenibilidad - Sector {sec}")
+                    total_empresas = len(sec_df)
+                    sostenibles = sum(1 for eval in evaluacion if eval == "✅ Sostenible")
+                    porcentaje_sostenible = (sostenibles / total_empresas) * 100 if total_empresas > 0 else 0
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("Empresas con deuda sostenible", f"{sostenibles}/{total_empresas}")
+                    with col2:
+                        st.metric("Porcentaje", f"{porcentaje_sostenible:.1f}%")
+                    
+                    if porcentaje_sostenible > 70:
+                        st.success("✅ Este sector muestra una buena salud financiera en general")
+                    elif porcentaje_sostenible > 40:
+                        st.warning("⚠️ Este sector muestra una salud financiera mixta")
+                    else:
+                        st.error("❌ Este sector muestra problemas de sostenibilidad de deuda")
                         
-                        bars = ax.bar(tickers, values)
-                        ax.set_title(ratio)
-                        ax.tick_params(axis='x', rotation=45)
-                        
-                        # Añadir línea de umbral
-                        if ratio in umbrales:
-                            ax.axhline(y=umbrales[ratio], color='r', linestyle='--', alpha=0.7)
-                
-                # Ocultar el último subplot si no se usa
-                if len(ratios) < len(axes):
-                    axes[-1].set_visible(False)
-                
-                plt.tight_layout()
-                st.pyplot(fig)
-                plt.close()
+                    # Nota sobre variaciones sectoriales
+                    if sec in ["Utilities", "Real Estate", "Energy"]:
+                        st.info(f"💡 Nota: El sector {sec} típicamente opera con niveles de deuda más altos que otros sectores. " 
+                               "Los umbrales estándar pueden ser demasiado conservadores para este sector.")
 
         # =====================================================
         # SECCIÓN 5: CRECIMIENTO
